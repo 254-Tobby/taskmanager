@@ -1249,52 +1249,42 @@
                 this.dom.taskLabels.value = selectedLabels.join(',');
             }
             
-            handleFormSubmit(e) {
-                e.preventDefault();
-                
-                const taskData = {
-                    id: this.dom.taskIdField.value || Date.now().toString(),
-                    title: this.dom.taskTitle.value,
-                    description: this.dom.taskDescription.value,
-                    priority: this.dom.taskPriority.value,
-                    dueDate: this.dom.taskDueDate.value,
-                    status: this.dom.taskStatusField.value || 'todo',
-                    labels: this.dom.taskLabels.value ? this.dom.taskLabels.value.split(',') : [],
-                    createdAt: this.dom.taskIdField.value ? 
-                        this.tasks.find(t => t.id === this.dom.taskIdField.value)?.createdAt || new Date().toISOString() : 
-                        new Date().toISOString()
-                };
-                
-                if (this.dom.taskIdField.value) {
-                    // Update existing task
-                    this.tasks = this.tasks.map(task => 
-                        task.id === this.dom.taskIdField.value ? taskData : task
-                    );
-                } else {
-                    // Add new task
-                    this.tasks.push(taskData);
-                }
-                
-                this.saveTasks();
-                this.render();
-                this.closeModal();
-            }
-            
-            editTask(taskId) {
-                this.openModal(null, taskId);
-            }
-            
-            deleteTask(taskId) {
-                if (confirm('Are you sure you want to delete this task?')) {
-                    this.tasks = this.tasks.filter(task => task.id !== taskId);
-                    this.saveTasks();
-                    this.render();
-                }
-            }
-            
-            saveTasks() {
-                localStorage.setItem('tasks', JSON.stringify(this.tasks));
-            }
+            handleFormSubmit(event) {
+    event.preventDefault();
+
+    // Get form values
+    const id = this.dom.taskIdField.value || new Date().getTime().toString();
+    const title = this.dom.taskTitle.value.trim();
+    const description = this.dom.taskDescription.value.trim() || '';
+    const priority = this.dom.taskPriority.value;
+    const dueDate = this.dom.taskDueDate.value || '';
+    const labels = Array.from(document.querySelectorAll('.label-option.selected'))
+                        .map(option => option.getAttribute('data-label'));
+    const status = this.dom.taskStatusField.value || 'todo';
+
+    // Validate title
+    if (!title) {
+        alert('Task title is required.');
+        return;
+    }
+
+    // Create or update task
+    const taskIndex = this.tasks.findIndex(task => task.id === id);
+    if (taskIndex > -1) {
+        // Update existing task
+        this.tasks[taskIndex] = { id, title, description, priority, dueDate, labels, status };
+    } else {
+        // Add new task
+        this.tasks.push({ id, title, description, priority, dueDate, labels, status });
+    }
+
+    // Save to localStorage
+    localStorage.setItem('tasks', JSON.stringify(this.tasks));
+
+    // Close modal and re-render tasks
+    this.closeModal();
+    this.render();
+}
             
             getLabelColor(label) {
                 const colors = {
